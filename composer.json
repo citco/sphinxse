@@ -1,0 +1,19 @@
+{
+    "name": "citco/boilerplate",
+    "description": "Boilerplate repository",
+    "authors": [
+        {
+            "name": "amir",
+            "email": "amir@cit.limited"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+    },
+    "autoload": {
+        "psr-0": {
+            "Citco\\Mailer": "src/"
+        }
+    },
+    "minimum-stability": "dev"
+}
