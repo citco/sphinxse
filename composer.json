@@ -1,6 +1,6 @@
 {
-    "name": "citco/boilerplate",
-    "description": "Boilerplate repository",
+    "name": "citco/sphinxse",
+    "description": "Sphinx SE Query Generator",
     "authors": [
         {
             "name": "amir",
