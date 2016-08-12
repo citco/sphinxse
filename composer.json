@@ -11,8 +11,8 @@
         "php": ">=5.4.0"
     },
     "autoload": {
-        "psr-0": {
-            "Citco\\Mailer": "src/"
+        "psr-4": {
+            "Citco\\": "src/"
         }
     },
     "minimum-stability": "dev"
