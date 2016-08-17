@@ -10,7 +10,7 @@ class SphinxSE
 	private $mode;
 	private $sort;
 	private $index;
-	private $field_weights;
+	private $fieldweights;
 	private $filter;
 	private $range;
 	private $floatrange;
@@ -114,10 +114,10 @@ class SphinxSE
 	{
 		foreach ($weights as $field => $weight)
 		{
-			$this->field_weights .= $field . ',' . $weight . ',';
+			$this->fieldweights .= $field . ',' . $weight . ',';
 		}
 
-		$this->field_weights = trim($this->field_weights, ',');
+		$this->fieldweights = trim($this->fieldweights, ',');
 	}
 
 	/**
@@ -166,10 +166,11 @@ class SphinxSE
 	 *
 	 * @param string  $attribute attribute name
 	 * @param array   $values    value set
+	 * @param boolean $exclude   exclude results
 	 */
-	public function setFilter($attribute, array $values)
+	public function setFilter($attribute, array $values, $exclude = false)
 	{
-		$this->filter[] = $attribute . ',' . implode(',', $values);
+		$this->filter[] = ($exclude ? '!' : '') . $attribute . ',' . implode(',', $values);
 	}
 
 	/**
@@ -178,11 +179,12 @@ class SphinxSE
 	 * @param string  $attribute attribute name
 	 * @param integer $min       minimum attribute value
 	 * @param integer $max       maximum attribute value
+	 * @param boolean $exclude   exclude results
 	 *
 	 */
-	public function setFilterRange($attribute, $min, $max)
+	public function setFilterRange($attribute, $min, $max, $exclude = false)
 	{
-		$this->range[] = $attribute . ",{$min},{$max}";
+		$this->range[] = ($exclude ? '!' : '') . $attribute . ",{$min},{$max}";
 	}
 
 
@@ -192,10 +194,11 @@ class SphinxSE
 	 * @param string  $attribute attribute name
 	 * @param float   $min       minimum attribute value
 	 * @param float   $max       maximum attribute value
+	 * @param boolean $exclude   exclude results
 	 */
-	public function setFilterFloatRange($attribute, $min, $max)
+	public function setFilterFloatRange($attribute, $min, $max, $exclude = false)
 	{
-		$this->floatrange[] = $attribute . ",{$min},{$max}";
+		$this->floatrange[] = ($exclude ? '!' : '') . $attribute . ",{$min},{$max}";
 	}
 
 	/**
@@ -246,7 +249,18 @@ class SphinxSE
 
 			    foreach ($this->{$property->name} as $value)
 			    {
-				    $query .= $property->name . '=' . $value . ';';
+			    	if (starts_with($value, '!'))
+				    {
+				    	$value = trim($value, '!');
+
+					    $exclude = true;
+				    }
+				    else
+				    {
+				    	$exclude = false;
+				    }
+
+				    $query .= ($exclude ? '!' : '') . $property->name . '=' . $value . ';';
 			    }
 		    }
 	    }
