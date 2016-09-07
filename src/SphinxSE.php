@@ -283,4 +283,13 @@ class SphinxSE
 
 		return str_replace($from, $to, $string);
 	}
+
+	 /**
+	  * Return only query attribute.
+	  * @return mixed
+	 */
+	public function getQuery()
+	{
+		return $this->query;
+	}
 }
