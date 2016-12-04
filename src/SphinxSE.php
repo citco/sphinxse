@@ -2,9 +2,8 @@
 
 use Citco\Exceptions\SphinxSEException;
 
-class SphinxSE
-{
-    private $query;
+class SphinxSE {
+	private $query;
 	private $limit;
 	private $offset;
 	private $mode;
@@ -21,21 +20,21 @@ class SphinxSE
 	private $ranker;
 	private $maxmatches;
 
-    public function __construct($config = [])
-    {
-	    foreach ($config as $key => $value)
-	    {
-		    if (property_exists($this, $key))
-		    {
-		    	$this->{$key} = $value;
-		    }
-        }
-    }
+	public function __construct($config = [])
+	{
+		foreach ($config as $key => $value)
+		{
+			if (property_exists($this, $key))
+			{
+				$this->{$key} = $value;
+			}
+		}
+	}
 
 	/**
 	 * Set searchd host name and port
 	 *
-	 * @param string  $host
+	 * @param string $host
 	 * @param integer $port
 	 */
 	public function setServer($host, $port = 0)
@@ -84,7 +83,7 @@ class SphinxSE
 	 * Set ranking mode
 	 *
 	 * @param string $ranker
-	 * @param string  $rankexpr
+	 * @param string $rankexpr
 	 *
 	 */
 	public function setRankingMode($ranker, $rankexpr = '')
@@ -96,7 +95,7 @@ class SphinxSE
 	 * Set matches sorting mode
 	 *
 	 * @param string $mode
-	 * @param string  $sortby
+	 * @param string $sortby
 	 *
 	 */
 	public function setSortMode($mode, $sortby = '')
@@ -130,15 +129,15 @@ class SphinxSE
 		$this->index = $index;
 	}
 
-    public function __call($name, $arguments)
-    {
-    	if (empty($arguments))
-	    {
-	    	throw new SphinxSEException('Need to provide field query');
-	    }
+	public function __call($name, $arguments)
+	{
+		if (empty($arguments))
+		{
+			throw new SphinxSEException('Need to provide field query');
+		}
 
-	    $this->fieldQuery($name, $arguments[0]);
-    }
+		$this->fieldQuery($name, $arguments[0]);
+	}
 
 	/**
 	 * Add keywords to search on specifid fields.
@@ -164,9 +163,9 @@ class SphinxSE
 	/**
 	 * Set values filter; only match records where $attribute value is in (or not in) the given set
 	 *
-	 * @param string  $attribute attribute name
-	 * @param array   $values    value set
-	 * @param boolean $exclude   exclude results
+	 * @param string $attribute attribute name
+	 * @param array $values value set
+	 * @param boolean $exclude exclude results
 	 */
 	public function setFilter($attribute, array $values, $exclude = false)
 	{
@@ -176,10 +175,10 @@ class SphinxSE
 	/**
 	 * Set range filter; only match records if $attribute value between $min and $max (inclusive)
 	 *
-	 * @param string  $attribute attribute name
-	 * @param integer $min       minimum attribute value
-	 * @param integer $max       maximum attribute value
-	 * @param boolean $exclude   exclude results
+	 * @param string $attribute attribute name
+	 * @param integer $min minimum attribute value
+	 * @param integer $max maximum attribute value
+	 * @param boolean $exclude exclude results
 	 *
 	 */
 	public function setFilterRange($attribute, $min, $max, $exclude = false)
@@ -187,14 +186,13 @@ class SphinxSE
 		$this->range[] = ($exclude ? '!' : '') . $attribute . ",{$min},{$max}";
 	}
 
-
 	/**
 	 * Set float range filter; only match records if $attribute value between $min and $max (inclusive)
 	 *
-	 * @param string  $attribute attribute name
-	 * @param float   $min       minimum attribute value
-	 * @param float   $max       maximum attribute value
-	 * @param boolean $exclude   exclude results
+	 * @param string $attribute attribute name
+	 * @param float $min minimum attribute value
+	 * @param float $max maximum attribute value
+	 * @param boolean $exclude exclude results
 	 */
 	public function setFilterFloatRange($attribute, $min, $max, $exclude = false)
 	{
@@ -204,9 +202,9 @@ class SphinxSE
 	/**
 	 * Set grouping attribute and function
 	 *
-	 * @param string  $attribute attribute name
-	 * @param integer $func      grouping function
-	 * @param string  $groupsort group sorting clause
+	 * @param string $attribute attribute name
+	 * @param integer $func grouping function
+	 * @param string $groupsort group sorting clause
 	 *
 	 * @return SphinxClient
 	 * @throws \InvalidArgumentException When attribute name, group clause or function is invalid
@@ -230,44 +228,43 @@ class SphinxSE
 		$this->distinct = $attribute;
 	}
 
-    public function toQuery()
-    {
-    	$reflection = new \ReflectionClass($this);
+	public function toQuery()
+	{
+		$reflection = new \ReflectionClass($this);
 
-	    $properties = $reflection->getProperties();
+		$properties = $reflection->getProperties();
 
-	    $query = '';
+		$query = '';
 
-	    foreach ($properties as $property)
-	    {
-	    	if (! empty($this->{$property->name}))
-		    {
-		    	if (! is_array($this->{$property->name}))
-			    {
-				    $this->{$property->name} = [$this->{$property->name}];
-			    }
+		foreach ($properties as $property)
+		{
+			if (! empty($this->{$property->name}))
+			{
+				if (! is_array($this->{$property->name}))
+				{
+					$this->{$property->name} = [$this->{$property->name}];
+				}
 
-			    foreach ($this->{$property->name} as $value)
-			    {
-			    	if (starts_with($value, '!'))
-				    {
-				    	$value = trim($value, '!');
+				foreach ($this->{$property->name} as $value)
+				{
+					if (starts_with($value, '!'))
+					{
+						$value = trim($value, '!');
 
-					    $exclude = true;
-				    }
-				    else
-				    {
-				    	$exclude = false;
-				    }
+						$exclude = true;
+					}
+					else
+					{
+						$exclude = false;
+					}
 
-				    $query .= ($exclude ? '!' : '') . $property->name . '=' . $value . ';';
-			    }
-		    }
-	    }
+					$query .= ($exclude ? '!' : '') . $property->name . '=' . $value . ';';
+				}
+			}
+		}
 
-	    return $query;
-    }
-
+		return $query;
+	}
 
 	/**
 	 * Escapes characters that are treated as special operators by the query language parser
@@ -279,17 +276,25 @@ class SphinxSE
 	public function escapeString($string)
 	{
 		$from = array('\\', '(', ')', '|', '-', '!', '@', '~', '"', '&', '/', '^', '$', '=', ';');
-		$to   = array('\\\\', '\(', '\)', '\|', '\-', '\!', '\@', '\~', '\"', '\&', '\/', '\^', '\$', '\=', '\;');
+		$to = array('\\\\', '\(', '\)', '\|', '\-', '\!', '\@', '\~', '\"', '\&', '\/', '\^', '\$', '\=', '\;');
 
 		return str_replace($from, $to, $string);
 	}
 
-	 /**
-	  * Return only query attribute.
-	  * @return mixed
+	/**
+	 * Return only query attribute.
+	 * @return mixed
 	 */
 	public function getQuery()
 	{
 		return $this->query;
+	}
+
+	/**
+	 * @param mixed $query
+	 */
+	public function setQuery($query)
+	{
+		$this->query = str_replace(';', '', $query);
 	}
 }
