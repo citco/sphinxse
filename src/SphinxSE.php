@@ -145,8 +145,9 @@ class SphinxSE {
 	 * @param $fields
 	 * @param $value
 	 * @param float $quorum
+	 * @param string $operator
 	 */
-	public function fieldQuery($fields, $value, $quorum = 0.8)
+	public function fieldQuery($fields, $value, $quorum = 0.8, $operator = '/')
 	{
 		if (is_array($fields))
 		{
@@ -157,7 +158,7 @@ class SphinxSE {
 			$field_string = '@' . $fields;
 		}
 
-		$this->query .= $field_string . ' "' . $this->escapeString($value) . '"/' . $quorum . ' ';
+		$this->query .= $field_string . ' "' . $this->escapeString($value) . '"' . ($quorum ? $operator . $quorum : '') . ' ';
 	}
 
 	/**
