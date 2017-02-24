@@ -239,14 +239,16 @@ class SphinxSE {
 
 		foreach ($properties as $property)
 		{
-			if (! empty($this->{$property->name}))
+			$element = $this->{$property->name};
+
+			if (! empty($element))
 			{
-				if (! is_array($this->{$property->name}))
+				if (! is_array($element))
 				{
-					$this->{$property->name} = [$this->{$property->name}];
+					$element = [$element];
 				}
 
-				foreach ($this->{$property->name} as $value)
+				foreach ($element as $value)
 				{
 					if (starts_with($value, '!'))
 					{
