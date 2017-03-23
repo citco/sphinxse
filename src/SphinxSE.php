@@ -170,6 +170,11 @@ class SphinxSE {
 	 */
 	public function setFilter($attribute, array $values, $exclude = false)
 	{
+		if (empty($values))
+		{
+			throw new SphinxSEException('Can not assign a filter with empty values');
+		}
+
 		$this->filter[] = ($exclude ? '!' : '') . $attribute . ',' . implode(',', $values);
 	}
 
