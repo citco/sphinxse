@@ -305,4 +305,13 @@ class SphinxSE {
 	{
 		$this->query = str_replace(';', '', $query);
 	}
+
+	/**
+	 * @param mixed $query
+	 */
+	public function appendQuery($query)
+	{
+		$this->query .= str_replace(';', '', $query);
+
+	}
 }
