@@ -3,6 +3,7 @@
 use Citco\Exceptions\SphinxSEException;
 
 class SphinxSE {
+
 	private $query;
 	private $limit;
 	private $offset;
@@ -19,6 +20,7 @@ class SphinxSE {
 	private $port;
 	private $ranker;
 	private $maxmatches;
+	private $geoanchor;
 
 	public function __construct($config = [])
 	{
@@ -34,7 +36,7 @@ class SphinxSE {
 	/**
 	 * Set searchd host name and port
 	 *
-	 * @param string $host
+	 * @param string  $host
 	 * @param integer $port
 	 */
 	public function setServer($host, $port = 0)
@@ -142,9 +144,9 @@ class SphinxSE {
 	/**
 	 * Add keywords to search on specifid fields.
 	 *
-	 * @param $fields
-	 * @param $value
-	 * @param float $quorum
+	 * @param        $fields
+	 * @param        $value
+	 * @param float  $quorum
 	 * @param string $operator
 	 */
 	public function fieldQuery($fields, $value, $quorum = 0.8, $operator = '/')
@@ -164,9 +166,9 @@ class SphinxSE {
 	/**
 	 * Set values filter; only match records where $attribute value is in (or not in) the given set
 	 *
-	 * @param string $attribute attribute name
-	 * @param array $values value set
-	 * @param boolean $exclude exclude results
+	 * @param string  $attribute attribute name
+	 * @param array   $values    value set
+	 * @param boolean $exclude   exclude results
 	 */
 	public function setFilter($attribute, array $values, $exclude = false)
 	{
@@ -181,10 +183,10 @@ class SphinxSE {
 	/**
 	 * Set range filter; only match records if $attribute value between $min and $max (inclusive)
 	 *
-	 * @param string $attribute attribute name
-	 * @param integer $min minimum attribute value
-	 * @param integer $max maximum attribute value
-	 * @param boolean $exclude exclude results
+	 * @param string  $attribute attribute name
+	 * @param integer $min       minimum attribute value
+	 * @param integer $max       maximum attribute value
+	 * @param boolean $exclude   exclude results
 	 *
 	 */
 	public function setFilterRange($attribute, $min, $max, $exclude = false)
@@ -195,10 +197,10 @@ class SphinxSE {
 	/**
 	 * Set float range filter; only match records if $attribute value between $min and $max (inclusive)
 	 *
-	 * @param string $attribute attribute name
-	 * @param float $min minimum attribute value
-	 * @param float $max maximum attribute value
-	 * @param boolean $exclude exclude results
+	 * @param string  $attribute attribute name
+	 * @param float   $min       minimum attribute value
+	 * @param float   $max       maximum attribute value
+	 * @param boolean $exclude   exclude results
 	 */
 	public function setFilterFloatRange($attribute, $min, $max, $exclude = false)
 	{
@@ -208,9 +210,9 @@ class SphinxSE {
 	/**
 	 * Set grouping attribute and function
 	 *
-	 * @param string $attribute attribute name
-	 * @param integer $func grouping function
-	 * @param string $groupsort group sorting clause
+	 * @param string  $attribute attribute name
+	 * @param integer $func      grouping function
+	 * @param string  $groupsort group sorting clause
 	 *
 	 * @return SphinxClient
 	 * @throws \InvalidArgumentException When attribute name, group clause or function is invalid
@@ -232,6 +234,11 @@ class SphinxSE {
 	public function setGroupDistinct($attribute)
 	{
 		$this->distinct = $attribute;
+	}
+
+	function setGeoAnchor($attrlat, $attrlong, $lat, $long)
+	{
+		$this->geoanchor = implode(',', compact('attrlat', 'attrlong', 'lat', 'long'));
 	}
 
 	public function toQuery()
@@ -283,8 +290,8 @@ class SphinxSE {
 	 */
 	public function escapeString($string)
 	{
-		$from = array('\\', '(', ')', '|', '-', '!', '@', '~', '"', '&', '/', '^', '$', '=', ';');
-		$to = array('\\\\', '\(', '\)', '\|', '\-', '\!', '\@', '\~', '\"', '\&', '\/', '\^', '\$', '\=', '\;');
+		$from = ['\\', '(', ')', '|', '-', '!', '@', '~', '"', '&', '/', '^', '$', '=', ';'];
+		$to = ['\\\\', '\(', '\)', '\|', '\-', '\!', '\@', '\~', '\"', '\&', '\/', '\^', '\$', '\=', '\;'];
 
 		return str_replace($from, $to, $string);
 	}
@@ -312,6 +319,5 @@ class SphinxSE {
 	public function appendQuery($query)
 	{
 		$this->query .= str_replace(';', '', $query);
-
 	}
 }
