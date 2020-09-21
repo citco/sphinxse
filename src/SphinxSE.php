@@ -10,6 +10,7 @@ class SphinxSE {
 	private $mode;
 	private $sort;
 	private $index;
+	private $select;
 	private $fieldweights;
 	private $filter;
 	private $range;
@@ -139,6 +140,16 @@ class SphinxSE {
 		}
 
 		$this->fieldQuery($name, $arguments[0]);
+	}
+
+	/**
+	 * Add select statement to the query
+	 *
+	 * @param $select
+	 */
+	public function setSelect($select)
+	{
+		$this->select[] = $select;
 	}
 
 	/**
