@@ -226,7 +226,6 @@ class SphinxSE {
 	 * @param string  $groupsort group sorting clause
 	 *
 	 * @return SphinxClient
-	 * @throws \InvalidArgumentException When attribute name, group clause or function is invalid
 	 */
 	public function setGroupBy($attribute, $func, $groupsort = '@group desc')
 	{
@@ -240,7 +239,6 @@ class SphinxSE {
 	 * @param string $attribute attribute name
 	 *
 	 * @return SphinxClient
-	 * @throws \InvalidArgumentException When attribute name is invalid
 	 */
 	public function setGroupDistinct($attribute)
 	{
