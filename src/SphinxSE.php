@@ -4,24 +4,24 @@ use Citco\Exceptions\SphinxSEException;
 
 class SphinxSE {
 
-	private $query;
-	private $limit;
-	private $offset;
-	private $mode;
-	private $sort;
-	private $index;
-	private $select;
-	private $fieldweights;
-	private $filter;
-	private $range;
-	private $floatrange;
-	private $groupby;
-	private $groupsort;
-	private $host;
-	private $port;
-	private $ranker;
-	private $maxmatches;
-	private $geoanchor;
+	protected $query;
+	protected $limit;
+	protected $offset;
+	protected $mode;
+	protected $sort;
+	protected $index;
+	protected $fieldweights;
+	protected $filter;
+	protected $range;
+	protected $floatrange;
+	protected $groupby;
+	protected $groupsort;
+	protected $host;
+	protected $port;
+	protected $ranker;
+	protected $maxmatches;
+
+	private $selects = [];
 
 	public function __construct($config = [])
 	{
@@ -39,6 +39,7 @@ class SphinxSE {
 	 *
 	 * @param string  $host
 	 * @param integer $port
+	 *
 	 */
 	public function setServer($host, $port = 0)
 	{
@@ -53,6 +54,7 @@ class SphinxSE {
 	 * @param integer $limit
 	 * @param integer $max
 	 * @param integer $cutoff
+	 *
 	 */
 	public function setLimits($offset, $limit, $max = 1000, $cutoff = 0)
 	{
@@ -65,6 +67,7 @@ class SphinxSE {
 	 * Set maximum query time, in milliseconds, per-index. 0 means "do not limit"
 	 *
 	 * @param integer $max
+	 *
 	 */
 	public function setMaxQueryTime($max)
 	{
@@ -126,30 +129,22 @@ class SphinxSE {
 	 * Set index to use for search
 	 *
 	 * @param $index
+	 *
 	 */
 	public function setIndex($index)
 	{
 		$this->index = $index;
 	}
 
-	public function __call($name, $arguments)
-	{
-		if (empty($arguments))
-		{
-			throw new SphinxSEException('Need to provide field query');
-		}
-
-		$this->fieldQuery($name, $arguments[0]);
-	}
-
 	/**
 	 * Add select statement to the query
 	 *
 	 * @param $select
+	 *
 	 */
 	public function setSelect($select)
 	{
-		$this->select[] = $select;
+		$this->selects[] = $select;
 	}
 
 	/**
@@ -159,6 +154,7 @@ class SphinxSE {
 	 * @param        $value
 	 * @param float  $quorum
 	 * @param string $operator
+	 *
 	 */
 	public function fieldQuery($fields, $value, $quorum = 0.8, $operator = '/')
 	{
@@ -180,6 +176,7 @@ class SphinxSE {
 	 * @param string  $attribute attribute name
 	 * @param array   $values    value set
 	 * @param boolean $exclude   exclude results
+	 *
 	 */
 	public function setFilter($attribute, array $values, $exclude = false)
 	{
@@ -212,6 +209,7 @@ class SphinxSE {
 	 * @param float   $min       minimum attribute value
 	 * @param float   $max       maximum attribute value
 	 * @param boolean $exclude   exclude results
+	 *
 	 */
 	public function setFilterFloatRange($attribute, $min, $max, $exclude = false)
 	{
@@ -225,7 +223,6 @@ class SphinxSE {
 	 * @param integer $func      grouping function
 	 * @param string  $groupsort group sorting clause
 	 *
-	 * @return SphinxClient
 	 */
 	public function setGroupBy($attribute, $func, $groupsort = '@group desc')
 	{
@@ -238,16 +235,25 @@ class SphinxSE {
 	 *
 	 * @param string $attribute attribute name
 	 *
-	 * @return SphinxClient
 	 */
 	public function setGroupDistinct($attribute)
 	{
 		$this->distinct = $attribute;
 	}
 
-	function setGeoAnchor($attrlat, $attrlong, $lat, $long)
+	/**
+	 * Set GEO anchor in select query
+	 *
+	 * @param string $attrlat  lat attr name
+	 * @param string $attrlong lng attr name
+	 * @param string $lat      lat value
+	 * @param string $long     lng value
+	 * @param string $alias    select alias
+	 *
+	 */
+	public function setGeoAnchor($attrlat, $attrlong, $lat, $long, $alias = 'geodist')
 	{
-		$this->geoanchor = implode(',', compact('attrlat', 'attrlong', 'lat', 'long'));
+		$this->setSelect('GEODIST(' . $attrlat . ', ' . $attrlong . ', ' . $lat . ', ' . $long . ') AS ' . $alias);
 	}
 
 	public function toQuery()
@@ -256,13 +262,13 @@ class SphinxSE {
 
 		$properties = $reflection->getProperties();
 
-		$query = '';
+		$query = empty($this->selects) ? '' : 'select=' . implode(',', $this->selects) . ';';
 
 		foreach ($properties as $property)
 		{
 			$element = $this->{$property->name};
 
-			if (! empty($element))
+			if ($property->isProtected() && ! empty($element))
 			{
 				if (! is_array($element))
 				{
@@ -307,6 +313,7 @@ class SphinxSE {
 
 	/**
 	 * Return only query attribute.
+	 *
 	 * @return mixed
 	 */
 	public function getQuery()
@@ -328,5 +335,15 @@ class SphinxSE {
 	public function appendQuery($query)
 	{
 		$this->query .= str_replace(';', '', $query);
+	}
+
+	public function __call($name, $arguments)
+	{
+		if (empty($arguments))
+		{
+			throw new SphinxSEException('Need to provide field query');
+		}
+
+		$this->fieldQuery($name, $arguments[0]);
 	}
 }
