@@ -58,6 +58,11 @@ class SphinxSE {
 	 */
 	public function setLimits($offset, $limit, $max = 1000, $cutoff = 0)
 	{
+		if ($offset >= $max)
+		{
+			throw new SphinxSEException('Offset out of bounds exception.');
+		}
+
 		$this->offset = $offset;
 		$this->limit = $limit;
 		$this->maxmatches = $max;
