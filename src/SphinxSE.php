@@ -22,6 +22,7 @@ class SphinxSE {
 	protected $maxmatches;
 
 	private $selects = [];
+	private $queries = [];
 
 	public function __construct($config = [])
 	{
@@ -48,15 +49,24 @@ class SphinxSE {
 	}
 
 	/**
-	 * Set offset and count into result set, optionally set max-matches and cutoff limits
+	 * Set a limit for the returned results
 	 *
-	 * @param integer $offset
 	 * @param integer $limit
-	 * @param integer $max
-	 * @param integer $cutoff
 	 *
 	 */
-	public function setLimits($offset, $limit, $max = 1000, $cutoff = 0)
+	public function setLimits($limit)
+	{
+		$this->limit = $limit;
+	}
+
+	/**
+	 * Set offset, optionally set max-matches
+	 *
+	 * @param integer $offset
+	 * @param integer $max
+	 *
+	 */
+	public function setOffset($offset, $max = 1000)
 	{
 		if ($offset >= $max)
 		{
@@ -64,7 +74,6 @@ class SphinxSE {
 		}
 
 		$this->offset = $offset;
-		$this->limit = $limit;
 		$this->maxmatches = $max;
 	}
 
@@ -142,14 +151,16 @@ class SphinxSE {
 	}
 
 	/**
-	 * Add select statement to the query
+	 * Add select statement to the query. It can be a string or an array.
+	 * In the case where data is stored in an array, you can set the special key for that.
+	 * And also resetting the special select can be done by assigning null to its key.
 	 *
 	 * @param $select
 	 *
 	 */
 	public function setSelect($select)
 	{
-		$this->selects[] = $select;
+		$this->selects = array_merge($this->selects, static::arrayWrap($select));
 	}
 
 	/**
@@ -172,7 +183,7 @@ class SphinxSE {
 			$field_string = '@' . $fields;
 		}
 
-		$this->query .= $field_string . ' "' . $this->escapeString($value) . '"' . ($quorum ? $operator . $quorum : '') . ' ';
+		$this->queries[$field_string] = $field_string . ' "' . $this->escapeString($value) . '"' . ($quorum ? $operator . $quorum : '');
 	}
 
 	/**
@@ -218,7 +229,18 @@ class SphinxSE {
 	 */
 	public function setFilterFloatRange($attribute, $min, $max, $exclude = false)
 	{
-		$this->floatrange[] = ($exclude ? '!' : '') . $attribute . ",{$min},{$max}";
+		$this->floatrange[$attribute] = ($exclude ? '!' : '') . $attribute . ",{$min},{$max}";
+	}
+
+	/**
+	 * Reset float range filter;
+	 *
+	 * @param string $attribute attribute name
+	 *
+	 */
+	public function resetFilterFloatRange($attribute)
+	{
+		$this->floatrange[$attribute] = null;
 	}
 
 	/**
@@ -258,7 +280,7 @@ class SphinxSE {
 	 */
 	public function setGeoAnchor($attrlat, $attrlong, $lat, $long, $alias = 'geodist')
 	{
-		$this->setSelect('GEODIST(' . $attrlat . ', ' . $attrlong . ', ' . $lat . ', ' . $long . ') AS ' . $alias);
+		$this->setSelect([$alias => 'GEODIST(' . $attrlat . ', ' . $attrlong . ', ' . $lat . ', ' . $long . ') AS ' . $alias]);
 	}
 
 	public function toQuery()
@@ -267,7 +289,11 @@ class SphinxSE {
 
 		$properties = $reflection->getProperties();
 
-		$query = empty($this->selects) ? '' : 'select=' . implode(',', $this->selects) . ';';
+		$this->query = $this->getQuery();
+
+		$this->selects = array_filter($this->selects);
+
+		$query = empty($this->selects) ? '' : 'select=' . implode(',', $this->selects) . '; ';
 
 		foreach ($properties as $property)
 		{
@@ -275,10 +301,7 @@ class SphinxSE {
 
 			if ($property->isProtected() && ! empty($element))
 			{
-				if (! is_array($element))
-				{
-					$element = [$element];
-				}
+				$element = array_filter(static::arrayWrap($element));
 
 				foreach ($element as $value)
 				{
@@ -293,12 +316,12 @@ class SphinxSE {
 						$exclude = false;
 					}
 
-					$query .= ($exclude ? '!' : '') . $property->name . '=' . $value . ';';
+					$query .= ($exclude ? '!' : '') . $property->name . '=' . $value . '; ';
 				}
 			}
 		}
 
-		return $query;
+		return trim($query);
 	}
 
 	/**
@@ -325,7 +348,7 @@ class SphinxSE {
 	 */
 	public function getQuery()
 	{
-		return $this->query;
+		return implode(' ', $this->queries);
 	}
 
 	/**
@@ -333,7 +356,7 @@ class SphinxSE {
 	 */
 	public function setQuery($query)
 	{
-		$this->query = str_replace(';', '', $query);
+		$this->queries = [str_replace(';', '', $query)];
 	}
 
 	/**
@@ -341,7 +364,7 @@ class SphinxSE {
 	 */
 	public function appendQuery($query)
 	{
-		$this->query .= str_replace(';', '', $query);
+		$this->queries[] = str_replace(';', '', $query);
 	}
 
 	public function __call($name, $arguments)
@@ -352,5 +375,22 @@ class SphinxSE {
 		}
 
 		$this->fieldQuery($name, $arguments[0]);
+	}
+
+	/**
+	 * If the given value is not an array and not null, wrap it in one.
+	 *
+	 * @param mixed $value
+	 *
+	 * @return array
+	 */
+	private static function arrayWrap($value)
+	{
+		if (is_null($value))
+		{
+			return [];
+		}
+
+		return is_array($value) ? $value : [$value];
 	}
 }
